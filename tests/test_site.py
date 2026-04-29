@@ -21,7 +21,7 @@ def test_cabecalho_principal():
     """Verifica se a tag <h1> existe e contém o nome correto."""
     h1_tag = soup.find('h1')
     assert h1_tag is not None
-    assert h1_tag.string == "Meu Nome"
+    assert h1_tag.string == "Bruna Aparecida Taborda"
 
 # Teste 3: Verifica se o subtítulo (h2) existe
 def test_subtitulo_existe():
