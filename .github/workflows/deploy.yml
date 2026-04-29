@@ -1,84 +1,72 @@
-# Nome do Workflow
-name: Deploy to GitHub Pages
-
-# Gatilhos (Triggers): Roda APENAS quando há um push para o branch main
+name: Deployment
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
 
-# Permissões necessárias para que o workflow possa interagir com o GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Configuração de concorrência para evitar múltiplas publicações ao mesmo tempo
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
-# Tarefas (Jobs) a serem executadas
 jobs:
-  # Job único de deployment
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }} # Define a URL de output do site
-    runs-on: ubuntu-latest
-    steps:
-      # 1. Baixa o código do repositório
-      - name: Checkout
-        uses: actions/checkout@v4
-      # 2. Configura o ambiente do GitHub Pages
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      # 3. Faz o "build" do site (cria um artefato com os arquivos a serem publicados)
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Publica o conteúdo da raiz do repositório
-          path: '.'
-      # 4. Publica o site
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-  
-  # Rodar os Testes Unitários
-  test:
-    # Nome do Job
-    name: Run Unit Tests
-    # Precisa do job de lint para passar primeiro
-    needs: lint
-    # Máquina virtual
+  delivery:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixar o código do repositório
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      # 2. Configurar o ambiente Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10' # Usando uma versão moderna do Python
-
-      # 3. Instalar as dependências do nosso arquivo requirements.txt
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      # 4. Rodar o Pytest!
-      - name: Run tests with pytest
-        run: pytest
-    
-  discord_notify:
-  needs: deploy
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v2
-
-    - name: Run Discord Webhook
-      uses: johnnyhuy/actions-discord-git-webhook@main
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
       with:
-        webhook_url: ${{ secrets.DISCORD_WEBHOOK}}
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run tests
+      run: |
+        pytest tests/
+    - name: Simulate delivery
+      uses: actions/upload-artifact@v7
+      with:
+        name: delivery-simulation.zip
+        path: |
+          '**.py'
+          README.md
+  
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+    - name: Analysing the code with pylint
+      run: |
+        pylint --fail-under=4.0 $(git ls-files '*.py')
+
+  deploy:
+    needs: delivery
+    runs-on: ubuntu-latest
+
+    permissions:
+      deployments: write
+
+    steps:
+    - name: Simulate deployment
+      run: echo "Simulating deployment to production environment..."
+  
+  discord_notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run Discord Webhook
+        uses: johnnyhuy/actions-discord-git-webhook@main
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK}}
+  
