@@ -64,9 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
+      
       - name: Run Discord Webhook
         uses: johnnyhuy/actions-discord-git-webhook@main
         with:
-          webhook_url: https://discordapp.com/api/webhooks/1499188607305515111/U3wl3oNDv8tdW_JqwhkY58rtOxHbcDo__VYn-7vBXbFze85MR34ddtVqnIXbDu1tHF0m
+          webhook_url: https://discord.com/api/webhooks/1498457612126257157/ITTColN3bhL7JbnUZ0WlRNsMX-WhW7tkYY--_Np0im4VSJ-h2STwCqKOVJMDYJn6d6Kj
   
